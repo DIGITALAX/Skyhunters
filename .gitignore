@@ -1,1 +1,2 @@
-contracts/lib
+contracts/lib/
+contracts/.env
