@@ -11,6 +11,10 @@ contract SkyhuntersErrors {
     error AgentDoesntExist();
     error ContractDoesntExist();
     error ContractAlreadyExists();
+    error PoolAlreadyExists();
+    error PoolDoesntExist();
+    error TokenDoesntExist();
+    error TokenAlreadyExists();
 
     error NotVerifiedContract();
     error InvalidFunds();
