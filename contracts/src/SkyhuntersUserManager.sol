@@ -11,9 +11,6 @@ contract SkyhuntersUserManager {
     mapping(address => mapping(address => uint256)) private _userDeposited;
     mapping(address => mapping(address => bool)) private _allowDeposit;
     mapping(address => mapping(address => uint256)) private _allowedDeposit;
-    mapping(address => mapping(uint256 => SkyhuntersLibrary.User))
-        private _usersByCycle;
-    mapping(uint256 => address[]) private _cycleUsers;
 
     event TokensReceived(address token, address user, uint256 amount);
     event UserWithdraw(address token, address user, uint256 amount);
@@ -129,12 +126,6 @@ contract SkyhuntersUserManager {
         address token
     ) public view returns (uint256) {
         return _allowedDeposit[user][token];
-    }
-
-    function getCycleUsers(
-        uint256 cycle
-    ) public view returns (address[] memory) {
-        return _cycleUsers[cycle];
     }
 
     function emergencyWithdraw(uint256 amount) external onlyAdmin {
