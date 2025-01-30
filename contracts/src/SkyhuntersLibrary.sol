@@ -12,4 +12,8 @@ contract SkyhuntersLibrary {
         uint256 scoreNegative;
         uint256 active;
     }
+
+    struct User {
+        uint256 id;
+    }
 }

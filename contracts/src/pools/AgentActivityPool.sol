@@ -6,7 +6,7 @@ import "./../SkyhuntersAccessControls.sol";
 import "./../SkyhuntersUserManager.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract DigitalaxTokenPool is IPool {
+contract AgentActivityPool is IPool {
     address public poolManager;
     address public mona;
     address public devTreasury;
@@ -95,7 +95,7 @@ contract DigitalaxTokenPool is IPool {
 
     function _cycleRewardsCalc() internal {
 
-        // genesis, pode, nfts, dlta etc. + staking
+        // basado en los agentes manejados
     }
 
     function getUserCurrentCycleRewards(
