@@ -17,11 +17,11 @@ interface IPool {
         uint256 cycle
     ) external view returns (uint256);
 
-    function getUserCurrentCycleBalance(
+    function getUserCurrentCycleBalances(
         address user
     ) external view returns (uint256);
 
-    function getUserBalanceByCycle(
+    function getUserBalancesByCycle(
         address user,
         uint256 cycle
     ) external view returns (uint256);
@@ -51,5 +51,10 @@ interface IPool {
 
     function emergencyWithdraw(uint256 amount) external;
 
-    function setCycleUser(address user) external;
+    function setCycleUser(address user, uint256 reward) external;
+
+    function setCycleUsers(
+        address[] memory users,
+        uint256[] memory rewards
+    ) external;
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "./BasePool.sol";
 
-contract AgentActivityPool is BasePool {
+contract DigitalaxTokenPool is BasePool {
     constructor(
         address _accessControls,
         address payable _userManager,

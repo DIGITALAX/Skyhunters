@@ -3,8 +3,11 @@ pragma solidity 0.8.24;
 
 import "./SkyhuntersAccessControls.sol";
 import "./SkyhuntersLibrary.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract SkyhuntersAgentManager {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     uint256 private _agentCounter;
     SkyhuntersAccessControls public accessControls;
     mapping(uint256 => SkyhuntersLibrary.Agent) private _agents;
@@ -80,16 +83,10 @@ contract SkyhuntersAgentManager {
 
         _isOwner[msg.sender][_agentCounter] = true;
 
-        _agents[_agentCounter] = SkyhuntersLibrary.Agent({
-            id: _agentCounter,
-            metadata: metadata,
-            agentWallets: wallets,
-            owners: owners,
-            creator: msg.sender,
-            scorePositive: 0,
-            scoreNegative: 0,
-            active: 0
-        });
+        _agents[_agentCounter].id = _agentCounter;
+        _agents[_agentCounter].metadata = metadata;
+        _agents[_agentCounter].creator = msg.sender;
+        _agents[_agentCounter].id = _agentCounter;
 
         for (uint8 i = 0; i < wallets.length; i++) {
             accessControls.addAgent(wallets[i]);
@@ -114,16 +111,14 @@ contract SkyhuntersAgentManager {
             revert SkyhuntersErrors.AgentStillActive();
         }
 
-        address[] memory _wallets = _agents[agentId].agentWallets;
-        address[] memory _owners = _agents[agentId].owners;
+        for (uint8 i = 0; i < _agents[agentId].agentWallets.length(); i++) {
+            accessControls.removeAgent(_agents[agentId].agentWallets.at(i));
 
-        for (uint8 i = 0; i < _wallets.length; i++) {
-            accessControls.removeAgent(_wallets[i]);
-            _isWallet[_wallets[i]][agentId] = false;
+            _isWallet[_agents[agentId].agentWallets.at(i)][agentId] = false;
         }
 
-        for (uint8 i = 0; i < _owners.length; i++) {
-            _isOwner[_owners[i]][agentId] = false;
+        for (uint8 i = 0; i < _agents[agentId].owners.length(); i++) {
+            _isOwner[_agents[agentId].owners.at(i)][agentId] = false;
         }
 
         delete _agents[agentId];
@@ -135,15 +130,7 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public onlyAgentCreator(agentId) {
-        for (uint8 i = 0; i < _agents[agentId].owners.length; i++) {
-            if (_agents[agentId].owners[i] == wallet) {
-                _agents[agentId].owners[i] = _agents[agentId].owners[
-                    _agents[agentId].owners.length - 1
-                ];
-                _agents[agentId].owners.pop();
-                break;
-            }
-        }
+        _agents[agentId].owners.remove(wallet);
         _isOwner[wallet][agentId] = false;
         emit RevokeOwner(wallet, agentId);
     }
@@ -152,7 +139,7 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public onlyAgentCreator(agentId) {
-        _agents[agentId].owners.push(wallet);
+        _agents[agentId].owners.add(wallet);
         _isOwner[wallet][agentId] = true;
         emit AddOwner(wallet, agentId);
     }
@@ -161,14 +148,7 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public onlyAgentOwnerOrCreator(agentId) {
-        for (uint8 i = 0; i < _agents[agentId].agentWallets.length; i++) {
-            if (_agents[agentId].agentWallets[i] == wallet) {
-                _agents[agentId].agentWallets[i] = _agents[agentId]
-                    .agentWallets[_agents[agentId].agentWallets.length - 1];
-                _agents[agentId].agentWallets.pop();
-                break;
-            }
-        }
+        _agents[agentId].agentWallets.remove(wallet);
         _isWallet[wallet][agentId] = false;
         accessControls.removeAgent(wallet);
 
@@ -179,7 +159,7 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public onlyAgentOwnerOrCreator(agentId) {
-        _agents[agentId].agentWallets.push(wallet);
+        _agents[agentId].agentWallets.add(wallet);
         _isWallet[wallet][agentId] = true;
         accessControls.addAgent(wallet);
         emit AddAgentWallet(wallet, agentId);
@@ -222,7 +202,7 @@ contract SkyhuntersAgentManager {
     function getAgentWallets(
         uint256 agentId
     ) public view returns (address[] memory) {
-        return _agents[agentId].agentWallets;
+        return _agents[agentId].agentWallets.values();
     }
 
     function getAgentMetadata(
@@ -246,7 +226,7 @@ contract SkyhuntersAgentManager {
     function getAgentOwners(
         uint256 agentId
     ) public view returns (address[] memory) {
-        return _agents[agentId].owners;
+        return _agents[agentId].owners.values();
     }
 
     function getAgentCreator(uint256 agentId) public view returns (address) {

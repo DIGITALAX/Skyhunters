@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSE
 pragma solidity 0.8.24;
 
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 contract SkyhuntersLibrary {
     struct Agent {
-        address[] agentWallets;
-        address[] owners;
+        EnumerableSet.AddressSet agentWallets;
+        EnumerableSet.AddressSet owners;
         string metadata;
         address creator;
         uint256 id;
