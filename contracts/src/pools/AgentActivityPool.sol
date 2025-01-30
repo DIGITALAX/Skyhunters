@@ -9,7 +9,9 @@ contract AgentActivityPool is BasePool {
         address payable _userManager,
         address payable _poolManager,
         address payable _devTreasury,
-        address _mona
+        address _mona,
+        address _positionManager,
+        address _tokenSnapshots
     )
         BasePool(
             _accessControls,
@@ -20,7 +22,7 @@ contract AgentActivityPool is BasePool {
         )
     {}
 
-    function _cycleRewardsCalc() internal override {
-        // basado en los agentes manejados
+    function _rewardCheck(address user) internal override returns (uint256) {
+ 
     }
 }

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "./BasePool.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./../helpers/TokenSnapshots.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
@@ -40,10 +39,8 @@ contract MonaPool is BasePool {
 
         uint256 _weekFactor = _holdTime >= 7 days ? 1 : _holdTime / 7 days;
         uint256 _timeFactor = _holdTime / 30 days;
-        uint256 _totalFactor = (_userLiquidity + _userBalance) *
-            (_timeFactor + _weekFactor);
 
-        return (calculatedReward * _totalFactor) / (_totalFactor + 1);
+        return (_userLiquidity + _userBalance) * (_timeFactor + _weekFactor);
     }
 
     function _getUniswapV3Stake(

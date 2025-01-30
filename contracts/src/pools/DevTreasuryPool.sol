@@ -9,7 +9,9 @@ contract DevTreasuryPool is BasePool {
         address payable _userManager,
         address payable _poolManager,
         address payable _devTreasury,
-        address _mona
+        address _mona,
+        address _positionManager,
+        address _tokenSnapshots
     )
         BasePool(
             _accessControls,
@@ -20,7 +22,7 @@ contract DevTreasuryPool is BasePool {
         )
     {}
 
-    function _cycleRewardsCalc() internal override {
-        // eliza + dev contributors actividad
+    function _rewardCheck(address user) internal override returns (uint256) {
+ 
     }
 }
