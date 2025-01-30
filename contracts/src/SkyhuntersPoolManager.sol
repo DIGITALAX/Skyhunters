@@ -41,6 +41,10 @@ contract SkyhuntersPoolManager {
         emit RewardsReceived(msg.sender, token, rewards);
     }
 
+    function depositToPool() public onlyVerifiedContract{
+
+    }
+
     receive() external payable {}
 
     fallback() external payable {}
