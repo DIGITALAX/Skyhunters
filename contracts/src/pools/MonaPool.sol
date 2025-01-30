@@ -5,16 +5,12 @@ import "./BasePool.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./../helpers/TokenSnapshots.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 contract MonaPool is BasePool {
-    address public uniswapV3Pool;
     TokenSnapshots public tokenSnapshots;
     INonfungiblePositionManager public positionManager;
 
-    mapping(address => uint256) public monaBalance;
-    mapping(address => uint256) public lastDepositTimestamp;
-    EnumerableSet.AddressSet private monaHolders;
+    mapping(uint256 => uint256) private _monaPriceSnapshots;
 
     constructor(
         address _accessControls,
@@ -22,7 +18,6 @@ contract MonaPool is BasePool {
         address payable _poolManager,
         address payable _devTreasury,
         address _mona,
-        address _uniswapV3Pool,
         address _positionManager,
         address _tokenSnapshots
     )
@@ -34,7 +29,6 @@ contract MonaPool is BasePool {
             _mona
         )
     {
-        uniswapV3Pool = _uniswapV3Pool;
         tokenSnapshots = TokenSnapshots(_tokenSnapshots);
         positionManager = INonfungiblePositionManager(_positionManager);
     }
@@ -57,9 +51,7 @@ contract MonaPool is BasePool {
     ) public view returns (uint256 monaAmount) {
         uint256 _balance = positionManager.balanceOf(user);
         uint256 _liquidity = 0;
-        IUniswapV3Pool pool = IUniswapV3Pool(uniswapV3Pool);
-
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        uint256 _price = _monaPriceSnapshots[_cycleCounter];
 
         for (uint256 i = 0; i < _balance; i++) {
             uint256 tokenId = positionManager.tokenOfOwnerByIndex(user, i);
@@ -84,10 +76,9 @@ contract MonaPool is BasePool {
         }
 
         if (_liquidity > 0) {
-            uint256 price = uint256(sqrtPriceX96) ** 2 / (2 ** 192);
             monaAmount = token0 == mona
-                ? (_liquidity * price) / 1e18
-                : (_liquidity * 1e18) / price;
+                ? (_liquidity * _price) / 1e18
+                : (_liquidity * 1e18) / _price;
         }
 
         return monaAmount;
@@ -95,5 +86,9 @@ contract MonaPool is BasePool {
 
     function setTokenSnapshots(address _tokenSnapshots) public onlyAdmin {
         tokenSnapshots = TokenSnapshots(_tokenSnapshots);
+    }
+
+    function getMonaPriceSnapshot(uint256 cycle) public view returns (uint256) {
+        return _monaPriceSnapshots[cycle];
     }
 }
