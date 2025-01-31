@@ -15,7 +15,8 @@ contract SkyhuntersLibrary {
         uint256 active;
     }
 
-    struct User {
-        uint256 id;
+    struct Snapshot {
+        string data;
+        uint256 blocktimestamp;
     }
 }

@@ -10,7 +10,7 @@ abstract contract BasePool is IPool {
     address public poolManager;
     address public mona;
     address public devTreasury;
-    uint256 private _cycleCounter;
+    uint256 internal _cycleCounter;
     uint256 private _totalPoolBalance;
     SkyhuntersAccessControls public accessControls;
     SkyhuntersUserManager public userManager;
@@ -64,12 +64,7 @@ abstract contract BasePool is IPool {
         }
 
         uint256 _reward = _userRewards[msg.sender];
-        uint256 _calculatedReward = _rewardCheck(msg.sender);
-
-        if (_reward != _calculatedReward) {
-            revert SkyhuntersErrors.InvalidReward();
-        }
-
+    
         if (!IERC20(mona).transfer(msg.sender, _userBalances[msg.sender])) {
             revert SkyhuntersErrors.RewardClaimFailed();
         }
@@ -227,8 +222,6 @@ abstract contract BasePool is IPool {
     function emergencyWithdraw(uint256 amount) external override onlyAdmin {
         payable(msg.sender).transfer(amount);
     }
-
-    function _rewardCheck(address user) internal virtual returns (uint256);
 
     receive() external payable {}
 
