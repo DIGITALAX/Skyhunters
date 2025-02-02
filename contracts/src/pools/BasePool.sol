@@ -10,7 +10,7 @@ abstract contract BasePool is IPool {
     address public poolManager;
     address public mona;
     address public devTreasury;
-    uint256 internal _cycleCounter;
+    uint256 private _cycleCounter;
     uint256 private _totalPoolBalance;
     SkyhuntersAccessControls public accessControls;
     SkyhuntersUserManager public userManager;

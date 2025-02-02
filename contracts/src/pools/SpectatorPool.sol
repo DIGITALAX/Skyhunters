@@ -21,8 +21,4 @@ contract SpectatorPool is BasePool {
             _mona
         )
     {}
-
-    function _rewardCheck(address user) internal override returns (uint256) {
- 
-    }
 }
