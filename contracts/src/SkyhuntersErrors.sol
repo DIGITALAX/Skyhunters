@@ -38,6 +38,4 @@ contract SkyhuntersErrors {
     error NoCycleRewards();
     error RewardClaimFailed();
     error BadUserInput();
-
-    error NeedTokens();
 }

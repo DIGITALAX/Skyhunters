@@ -19,9 +19,4 @@ contract SkyhuntersLibrary {
         string data;
         uint256 blocktimestamp;
     }
-
-    struct Spectator {
-        string data;
-        uint256 blocktimestamp;
-    }
 }

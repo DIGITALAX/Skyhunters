@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract SkyhuntersUserManager {
     SkyhuntersAccessControls public accessControls;
+    string public symbol;
+    string public name;
     mapping(address => mapping(address => uint256)) private _userDeposited;
     mapping(address => mapping(address => bool)) private _allowDeposit;
     mapping(address => mapping(address => uint256)) private _allowedDeposit;
@@ -39,6 +41,8 @@ contract SkyhuntersUserManager {
 
     constructor(address _accessControls) payable {
         accessControls = SkyhuntersAccessControls(_accessControls);
+        name = "SkyhuntersUserManager";
+        symbol = "SUM";
     }
 
     function receiveTokensUser(address token, uint256 amount) public {

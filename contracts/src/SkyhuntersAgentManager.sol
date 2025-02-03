@@ -9,6 +9,8 @@ contract SkyhuntersAgentManager {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 private _agentCounter;
+    string public symbol;
+    string public name;
     SkyhuntersAccessControls public accessControls;
     mapping(uint256 => SkyhuntersLibrary.Agent) private _agents;
     mapping(address => mapping(uint256 => bool)) private _isOwner;
@@ -64,6 +66,8 @@ contract SkyhuntersAgentManager {
 
     constructor(address payable _accessControls) payable {
         accessControls = SkyhuntersAccessControls(_accessControls);
+        name = "SkyhuntersAgentManager";
+        symbol = "SAM";
     }
 
     function createAgent(

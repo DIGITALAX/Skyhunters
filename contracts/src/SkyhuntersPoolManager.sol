@@ -8,6 +8,8 @@ import "./pools/IPool.sol";
 
 contract SkyhuntersPoolManager {
     SkyhuntersAccessControls public accessControls;
+    string public symbol;
+    string public name;
     address public mona;
     uint256 private _poolBalance;
 
@@ -41,6 +43,8 @@ contract SkyhuntersPoolManager {
     constructor(address _accessControls, address _mona) payable {
         accessControls = SkyhuntersAccessControls(_accessControls);
         mona = _mona;
+        name = "SkyhuntersPoolManager";
+        symbol = "SPM";
     }
 
     function receiveRewards(
