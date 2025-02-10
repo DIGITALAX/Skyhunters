@@ -203,51 +203,46 @@ abstract contract BasePool is IPool {
             }
         }
 
-        if (!IERC20(mona).transfer(devTreasury, _amount)) {
-            revert SkyhuntersErrors.TransferFailed();
+        if (IERC20(mona).balanceOf(address(this)) >= _amount) {
+            IERC20(mona).transfer(devTreasury, _amount);
+            emit CycleCleaned(mona, cycle, _amount);
+        } else {
+            revert SkyhuntersErrors.InsufficientCycleBalance();
         }
 
-        emit CycleCleaned(mona, cycle, _amount);
-
-        address[] memory activeTokens = _activeTokens.values();
-        uint256 activeTokensLength = activeTokens.length;
-        uint256[] memory tokenAmounts = new uint256[](activeTokensLength);
-        address[] memory tokensToRemove = new address[](activeTokensLength);
-        uint8 removeCount = 0;
-
-        for (uint8 j = 0; j < activeTokensLength; j++) {
+        for (uint8 j = 0; j < _activeTokens.length(); j++) {
             uint256 _tokenAmount = 0;
-            address token = activeTokens[j];
 
             for (uint128 i = 0; i < usersLength; i++) {
                 address user = users[i];
                 if (!_userClaimedByCycle[cycle][user]) {
                     _tokenAmount += _additionalTokensUserBalancesByCycle[cycle][
-                        token
+                        _activeTokens.at(j)
                     ][user];
                 }
             }
 
-            tokenAmounts[j] = _tokenAmount;
-
-            if (!IERC20(token).transfer(devTreasury, _tokenAmount)) {
-                revert SkyhuntersErrors.TransferFailed();
-            }
-
-            if (_tokenAmount <= _totalPoolBalanceByToken[token]) {
-                _totalPoolBalanceByToken[token] -= _tokenAmount;
+            if (
+                IERC20(_activeTokens.at(j)).balanceOf(address(this)) >=
+                _tokenAmount
+            ) {
+                IERC20(_activeTokens.at(j)).transfer(devTreasury, _tokenAmount);
+                emit CycleCleaned(_activeTokens.at(j), cycle, _tokenAmount);
             } else {
-                _totalPoolBalanceByToken[token] = 0;
+                revert SkyhuntersErrors.InsufficientCycleBalance();
             }
 
-            if (_totalPoolBalanceByToken[token] == 0) {
-                tokensToRemove[removeCount] = token;
-                removeCount++;
+            if (_tokenAmount <= _totalPoolBalanceByToken[_activeTokens.at(j)]) {
+                _totalPoolBalanceByToken[_activeTokens.at(j)] -= _tokenAmount;
+            } else {
+                _totalPoolBalanceByToken[_activeTokens.at(j)] = 0;
             }
         }
 
-        for (uint8 j = 0; j < removeCount; j++) {
-            _activeTokens.remove(tokensToRemove[j]);
+        for (uint8 j = 0; j < _activeTokens.length(); j++) {
+            if (_totalPoolBalanceByToken[_activeTokens.at(j)] == 0) {
+                _activeTokens.remove(_activeTokens.at(j));
+            }
         }
     }
 
