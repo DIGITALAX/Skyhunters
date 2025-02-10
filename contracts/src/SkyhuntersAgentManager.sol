@@ -13,8 +13,6 @@ contract SkyhuntersAgentManager {
     string public name;
     SkyhuntersAccessControls public accessControls;
     mapping(uint256 => SkyhuntersLibrary.Agent) private _agents;
-    mapping(address => mapping(uint256 => bool)) private _isOwner;
-    mapping(address => mapping(uint256 => bool)) private _isWallet;
 
     event AgentCreated(address[] wallets, address creator, uint256 indexed id);
     event AgentDeleted(uint256 indexed id);
@@ -41,7 +39,7 @@ contract SkyhuntersAgentManager {
 
     modifier onlyAgentOwnerOrCreator(uint256 agentId) {
         if (
-            !_isOwner[msg.sender][agentId] &&
+            !_agents[agentId].owners.contains(msg.sender) &&
             _agents[agentId].creator != msg.sender
         ) {
             revert SkyhuntersErrors.NotAgentOwner();
@@ -77,15 +75,15 @@ contract SkyhuntersAgentManager {
     ) external {
         _agentCounter++;
 
+        _agents[_agentCounter].owners.add(msg.sender);
+
         for (uint8 i = 0; i < owners.length; i++) {
-            _isOwner[owners[i]][_agentCounter] = true;
+            _agents[_agentCounter].owners.add(owners[i]);
         }
 
         for (uint8 i = 0; i < wallets.length; i++) {
-            _isWallet[wallets[i]][_agentCounter] = true;
+            _agents[_agentCounter].wallets.add(wallets[i]);
         }
-
-        _isOwner[msg.sender][_agentCounter] = true;
 
         _agents[_agentCounter].id = _agentCounter;
         _agents[_agentCounter].metadata = metadata;
@@ -115,14 +113,8 @@ contract SkyhuntersAgentManager {
             revert SkyhuntersErrors.AgentStillActive();
         }
 
-        for (uint8 i = 0; i < _agents[agentId].agentWallets.length(); i++) {
-            accessControls.removeAgent(_agents[agentId].agentWallets.at(i));
-
-            _isWallet[_agents[agentId].agentWallets.at(i)][agentId] = false;
-        }
-
-        for (uint8 i = 0; i < _agents[agentId].owners.length(); i++) {
-            _isOwner[_agents[agentId].owners.at(i)][agentId] = false;
+        for (uint8 i = 0; i < _agents[agentId].wallets.length(); i++) {
+            accessControls.removeAgent(_agents[agentId].wallets.at(i));
         }
 
         delete _agents[agentId];
@@ -135,7 +127,6 @@ contract SkyhuntersAgentManager {
         uint256 agentId
     ) public onlyAgentCreator(agentId) {
         _agents[agentId].owners.remove(wallet);
-        _isOwner[wallet][agentId] = false;
         emit RevokeOwner(wallet, agentId);
     }
 
@@ -144,7 +135,6 @@ contract SkyhuntersAgentManager {
         uint256 agentId
     ) public onlyAgentCreator(agentId) {
         _agents[agentId].owners.add(wallet);
-        _isOwner[wallet][agentId] = true;
         emit AddOwner(wallet, agentId);
     }
 
@@ -152,8 +142,7 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public onlyAgentOwnerOrCreator(agentId) {
-        _agents[agentId].agentWallets.remove(wallet);
-        _isWallet[wallet][agentId] = false;
+        _agents[agentId].wallets.remove(wallet);
         accessControls.removeAgent(wallet);
 
         emit RevokeAgentWallet(wallet, agentId);
@@ -163,8 +152,7 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public onlyAgentOwnerOrCreator(agentId) {
-        _agents[agentId].agentWallets.add(wallet);
-        _isWallet[wallet][agentId] = true;
+        _agents[agentId].wallets.add(wallet);
         accessControls.addAgent(wallet);
         emit AddAgentWallet(wallet, agentId);
     }
@@ -206,7 +194,7 @@ contract SkyhuntersAgentManager {
     function getAgentWallets(
         uint256 agentId
     ) public view returns (address[] memory) {
-        return _agents[agentId].agentWallets.values();
+        return _agents[agentId].wallets.values();
     }
 
     function getAgentMetadata(
@@ -233,6 +221,10 @@ contract SkyhuntersAgentManager {
         return _agents[agentId].owners.values();
     }
 
+    function getAgentActive(uint256 agentId) public view returns (uint256) {
+        return _agents[agentId].active;
+    }
+
     function getAgentCreator(uint256 agentId) public view returns (address) {
         return _agents[agentId].creator;
     }
@@ -241,14 +233,14 @@ contract SkyhuntersAgentManager {
         address wallet,
         uint256 agentId
     ) public view returns (bool) {
-        return _isWallet[wallet][agentId];
+        return _agents[agentId].wallets.contains(wallet);
     }
 
     function getIsAgentOwner(
         address owner,
         uint256 agentId
     ) public view returns (bool) {
-        return _isOwner[owner][agentId];
+        return _agents[agentId].owners.contains(owner);
     }
 
     function setAccessControls(

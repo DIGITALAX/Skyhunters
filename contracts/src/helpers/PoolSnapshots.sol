@@ -18,7 +18,7 @@ contract TokenSnapshots {
         _;
     }
 
-    constructor(address _accessControls) {
+    constructor(address payable _accessControls) {
         accessControls = SkyhuntersAccessControls(_accessControls);
     }
 
@@ -49,7 +49,7 @@ contract TokenSnapshots {
         return _snapshots[verifiedContract][cycle].data;
     }
 
-    function setAccessControls(address _accessControls) public onlyAdmin {
+    function setAccessControls(address payable _accessControls) public onlyAdmin {
         accessControls = SkyhuntersAccessControls(_accessControls);
     }
 }

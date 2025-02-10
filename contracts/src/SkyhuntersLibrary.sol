@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract SkyhuntersLibrary {
     struct Agent {
-        EnumerableSet.AddressSet agentWallets;
+        EnumerableSet.AddressSet wallets;
         EnumerableSet.AddressSet owners;
         string metadata;
         address creator;

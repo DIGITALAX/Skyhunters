@@ -40,7 +40,7 @@ contract SkyhuntersPoolManager {
     event PoolPercent(address[] pools, uint256[] percents);
     event PoolsDeposited(address[] pools, uint256[] amounts);
 
-    constructor(address _accessControls, address _mona) payable {
+    constructor(address payable _accessControls, address _mona) payable {
         accessControls = SkyhuntersAccessControls(_accessControls);
         mona = _mona;
         name = "SkyhuntersPoolManager";
@@ -112,7 +112,7 @@ contract SkyhuntersPoolManager {
         return _poolBalance;
     }
 
-    function setAccessControls(address _accessControls) public onlyAdmin {
+    function setAccessControls(address payable _accessControls) public onlyAdmin {
         accessControls = SkyhuntersAccessControls(_accessControls);
     }
 
@@ -120,8 +120,11 @@ contract SkyhuntersPoolManager {
         mona = _mona;
     }
 
-    function emergencyWithdraw(uint256 amount) external onlyAdmin {
-        payable(msg.sender).transfer(amount);
+      function emergencyWithdraw(uint256 amount, uint256 gasAmount) external onlyAdmin {
+        (bool success, ) = payable(msg.sender).call{value: amount, gas: gasAmount}("");
+        if (!success) {
+            revert SkyhuntersErrors.TransferFailed();
+        }
     }
 
     receive() external payable {}

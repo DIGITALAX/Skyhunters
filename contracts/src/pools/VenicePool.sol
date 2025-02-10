@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "./BasePool.sol";
 
-abstract contract AgentActivityPool is BasePool {
+abstract contract VenicePool is BasePool {
     constructor(
         address payable _accessControls,
         address payable _userManager,

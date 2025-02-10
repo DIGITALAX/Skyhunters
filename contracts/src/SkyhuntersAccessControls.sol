@@ -50,7 +50,7 @@ contract SkyhuntersAccessControls {
     event AcceptedTokenSet(address token);
     event AcceptedTokenRemoved(address token);
 
-    constructor() {
+    constructor() payable {
         _admins[msg.sender] = true;
         name = "SkyhuntersAccessControls";
         symbol = "SAC";
@@ -188,4 +188,21 @@ contract SkyhuntersAccessControls {
     function getVerifiedPools() public view returns (address[] memory) {
         return _verifiedPoolsList.values();
     }
+
+    function emergencyWithdraw(
+        uint256 amount,
+        uint256 gasAmount
+    ) external onlyAdmin {
+        (bool success, ) = payable(msg.sender).call{
+            value: amount,
+            gas: gasAmount
+        }("");
+        if (!success) {
+            revert SkyhuntersErrors.TransferFailed();
+        }
+    }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }

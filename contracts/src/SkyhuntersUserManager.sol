@@ -39,7 +39,7 @@ contract SkyhuntersUserManager {
         _;
     }
 
-    constructor(address _accessControls) payable {
+    constructor(address payable _accessControls) payable {
         accessControls = SkyhuntersAccessControls(_accessControls);
         name = "SkyhuntersUserManager";
         symbol = "SUM";
@@ -107,7 +107,7 @@ contract SkyhuntersUserManager {
         emit DepositUsed(user, token, msg.sender, amount);
     }
 
-    function setAccessControls(address _accessControls) public onlyAdmin {
+    function setAccessControls(address payable _accessControls) public onlyAdmin {
         accessControls = SkyhuntersAccessControls(_accessControls);
     }
 
@@ -132,8 +132,11 @@ contract SkyhuntersUserManager {
         return _allowedDeposit[user][token];
     }
 
-    function emergencyWithdraw(uint256 amount) external onlyAdmin {
-        payable(msg.sender).transfer(amount);
+    function emergencyWithdraw(uint256 amount, uint256 gasAmount) external onlyAdmin {
+        (bool success, ) = payable(msg.sender).call{value: amount, gas: gasAmount}("");
+        if (!success) {
+            revert SkyhuntersErrors.TransferFailed();
+        }
     }
 
     receive() external payable {}
