@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSE
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 import "./SkyhuntersAccessControls.sol";
 import "./SkyhuntersLibrary.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 contract SkyhuntersAgentManager {
     using EnumerableSet for EnumerableSet.AddressSet;

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "./SkyhuntersErrors.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 contract SkyhuntersAccessControls {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -11,6 +11,7 @@ contract SkyhuntersAccessControls {
     string public name;
     EnumerableSet.AddressSet private _verifiedContractsList;
     EnumerableSet.AddressSet private _verifiedPoolsList;
+    EnumerableSet.AddressSet private _acceptedTokensList;
 
     mapping(address => bool) private _admins;
     mapping(address => bool) private _verifiedContracts;
@@ -118,20 +119,24 @@ contract SkyhuntersAccessControls {
         emit VerifiedPoolRemoved(verifiedPool);
     }
 
-    function setAcceptedToken(address token) external {
+    function setAcceptedToken(address token) external onlyAdmin {
         if (_acceptedTokens[token]) {
             revert SkyhuntersErrors.TokenAlreadyExists();
         }
+
+        _acceptedTokensList.add(token);
 
         _acceptedTokens[token] = true;
 
         emit AcceptedTokenSet(token);
     }
 
-    function removeAcceptedToken(address token) external {
+    function removeAcceptedToken(address token) external onlyAdmin {
         if (!_acceptedTokens[token]) {
             revert SkyhuntersErrors.TokenDoesntExist();
         }
+
+        _acceptedTokensList.remove(token);
 
         delete _acceptedTokens[token];
 
@@ -187,6 +192,10 @@ contract SkyhuntersAccessControls {
 
     function getVerifiedPools() public view returns (address[] memory) {
         return _verifiedPoolsList.values();
+    }
+
+    function getAcceptedTokens() public view returns (address[] memory) {
+        return _acceptedTokensList.values();
     }
 
     function emergencyWithdraw(

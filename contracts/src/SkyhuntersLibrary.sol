@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSE
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 contract SkyhuntersLibrary {
     struct Agent {

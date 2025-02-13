@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import "./IPool.sol";
 import "./../SkyhuntersAccessControls.sol";
 import "./../SkyhuntersUserManager.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 
 abstract contract BasePool is IPool {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -15,7 +15,6 @@ abstract contract BasePool is IPool {
     address public devTreasury;
     EnumerableSet.AddressSet private _activeTokens;
     uint256 private _cycleCounter;
-    uint256 private _totalPoolBalance;
     uint256 private _historicalPoolBalance;
     SkyhuntersAccessControls public accessControls;
     SkyhuntersUserManager public userManager;
@@ -42,7 +41,12 @@ abstract contract BasePool is IPool {
         uint256 cycle,
         uint256 totalRewards
     );
-    event RewardClaimed(address indexed user, uint256 amount, uint256 cycle);
+    event RewardClaimed(
+        address indexed user,
+        uint256 reward,
+        uint256 balance,
+        uint256 cycle
+    );
     event CycleCleaned(address token, uint256 cycle, uint256 amount);
     event CycleUserSet(address user, uint256 cycle);
     event CycleUsersSet(address[] users, uint256 cycle);
@@ -89,11 +93,11 @@ abstract contract BasePool is IPool {
         }
 
         uint256 _reward = _userRewards[msg.sender];
+        uint256 _balance = _userBalances[msg.sender];
 
-        if (!IERC20(mona).transfer(msg.sender, _userBalances[msg.sender])) {
+        if (!IERC20(mona).transfer(msg.sender, _balance)) {
             revert SkyhuntersErrors.RewardClaimFailed();
         }
-        _totalPoolBalance -= _userBalances[msg.sender];
         _userClaimedByCycle[_cycleCounter][msg.sender] = true;
         _userBalances[msg.sender] = 0;
         _userRewards[msg.sender] = 0;
@@ -133,17 +137,20 @@ abstract contract BasePool is IPool {
             }
         }
 
-        emit RewardClaimed(msg.sender, _reward, _cycleCounter);
+        emit RewardClaimed(msg.sender, _reward, _balance, _cycleCounter);
     }
 
     function depositToPool(uint256 amount) external override {
         _cycleCounter++;
         _historicalPoolBalance += amount;
-        _totalPoolBalance += amount;
         uint256 _totalRewards = 0;
 
         for (uint256 i = 0; i < _cycleUsers[_cycleCounter].length; i++) {
             _totalRewards += _userRewards[_cycleUsers[_cycleCounter][i]];
+        }
+
+        if (_totalRewards == 0) {
+            revert SkyhuntersErrors.NoCycleRewards();
         }
 
         for (uint8 i = 0; i < _cycleUsers[_cycleCounter].length; i++) {
@@ -165,6 +172,10 @@ abstract contract BasePool is IPool {
     ) public onlyAdmin {
         if (tokens.length != amounts.length) {
             revert SkyhuntersErrors.BadUserInput();
+        }
+
+        if (_totalRewardsByCycle[_cycleCounter] == 0) {
+            revert SkyhuntersErrors.NoCycleRewards();
         }
 
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -194,9 +205,8 @@ abstract contract BasePool is IPool {
     function cleanCycle(uint256 cycle) external override onlyAdmin {
         uint256 _amount = 0;
         address[] memory users = _cycleUsers[cycle];
-        uint256 usersLength = users.length;
 
-        for (uint128 i = 0; i < usersLength; i++) {
+        for (uint128 i = 0; i < users.length; i++) {
             address user = users[i];
             if (!_userClaimedByCycle[cycle][user]) {
                 _amount += _userBalancesByCycle[cycle][user];
@@ -213,7 +223,7 @@ abstract contract BasePool is IPool {
         for (uint8 j = 0; j < _activeTokens.length(); j++) {
             uint256 _tokenAmount = 0;
 
-            for (uint128 i = 0; i < usersLength; i++) {
+            for (uint128 i = 0; i < users.length; i++) {
                 address user = users[i];
                 if (!_userClaimedByCycle[cycle][user]) {
                     _tokenAmount += _additionalTokensUserBalancesByCycle[cycle][
@@ -239,9 +249,10 @@ abstract contract BasePool is IPool {
             }
         }
 
-        for (uint8 j = 0; j < _activeTokens.length(); j++) {
-            if (_totalPoolBalanceByToken[_activeTokens.at(j)] == 0) {
-                _activeTokens.remove(_activeTokens.at(j));
+        for (uint256 j = _activeTokens.length(); j > 0; j--) {
+            address _token = _activeTokens.at(j - 1);
+            if (_totalPoolBalanceByToken[_token] == 0) {
+                _activeTokens.remove(_token);
             }
         }
     }
@@ -250,32 +261,36 @@ abstract contract BasePool is IPool {
         address user,
         uint256 reward
     ) external override onlyVerifiedContract {
-        if (!_usersByCycle[user][_cycleCounter]) {
-            _cycleUsers[_cycleCounter].push(user);
+        uint256 _forCycle = _cycleCounter + 1;
+
+        if (!_usersByCycle[user][_forCycle]) {
+            _cycleUsers[_forCycle].push(user);
         }
 
-        _usersByCycle[user][_cycleCounter] = true;
-        _userRewardsByCycle[_cycleCounter][user] = reward;
+        _usersByCycle[user][_forCycle] = true;
+        _userRewardsByCycle[_forCycle][user] = reward;
         _userRewards[user] = reward;
 
-        emit CycleUserSet(user, _cycleCounter);
+        emit CycleUserSet(user, _forCycle);
     }
 
     function setCycleUsers(
         address[] memory users,
         uint256[] memory rewards
     ) external override onlyVerifiedContract {
+        uint256 _forCycle = _cycleCounter + 1;
+
         for (uint256 i = 0; i < users.length; i++) {
-            if (!_usersByCycle[users[i]][_cycleCounter]) {
-                _cycleUsers[_cycleCounter].push(users[i]);
+            if (!_usersByCycle[users[i]][_forCycle]) {
+                _cycleUsers[_forCycle].push(users[i]);
             }
 
-            _usersByCycle[users[i]][_cycleCounter] = true;
-            _userRewardsByCycle[_cycleCounter][users[i]] = rewards[i];
+            _usersByCycle[users[i]][_forCycle] = true;
+            _userRewardsByCycle[_forCycle][users[i]] = rewards[i];
             _userRewards[users[i]] = rewards[i];
         }
 
-        emit CycleUsersSet(users, _cycleCounter);
+        emit CycleUsersSet(users, _forCycle);
     }
 
     function getUserCurrentCycleRewards(
@@ -337,7 +352,7 @@ abstract contract BasePool is IPool {
     }
 
     function getPoolBalance() external view override returns (uint256) {
-        return _totalPoolBalance;
+        return IERC20(mona).balanceOf(address(this));
     }
 
     function getPoolHistoricalBalance()

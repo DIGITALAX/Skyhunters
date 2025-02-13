@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "./SkyhuntersAccessControls.sol";
 import "./SkyhuntersErrors.sol";
 import "./SkyhuntersLibrary.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract SkyhuntersUserManager {
     SkyhuntersAccessControls public accessControls;
@@ -49,6 +49,9 @@ contract SkyhuntersUserManager {
         if (!accessControls.isAcceptedToken(token)) {
             revert SkyhuntersErrors.TokenNotAccepted();
         }
+
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+
         _userDeposited[msg.sender][token] += amount;
 
         emit TokensReceived(token, msg.sender, amount);
@@ -104,10 +107,14 @@ contract SkyhuntersUserManager {
 
         IERC20(token).transfer(msg.sender, amount);
 
+        _userDeposited[user][token] -= amount;
+
         emit DepositUsed(user, token, msg.sender, amount);
     }
 
-    function setAccessControls(address payable _accessControls) public onlyAdmin {
+    function setAccessControls(
+        address payable _accessControls
+    ) public onlyAdmin {
         accessControls = SkyhuntersAccessControls(_accessControls);
     }
 
@@ -132,8 +139,14 @@ contract SkyhuntersUserManager {
         return _allowedDeposit[user][token];
     }
 
-    function emergencyWithdraw(uint256 amount, uint256 gasAmount) external onlyAdmin {
-        (bool success, ) = payable(msg.sender).call{value: amount, gas: gasAmount}("");
+    function emergencyWithdraw(
+        uint256 amount,
+        uint256 gasAmount
+    ) external onlyAdmin {
+        (bool success, ) = payable(msg.sender).call{
+            value: amount,
+            gas: gasAmount
+        }("");
         if (!success) {
             revert SkyhuntersErrors.TransferFailed();
         }
