@@ -1,3 +1,3 @@
-contracts/lib/
+contracts/lib/*
 contracts/.env
 contracts/zkout/
